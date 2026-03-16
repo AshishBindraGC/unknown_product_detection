@@ -1,0 +1,4 @@
+id: itservices.akp@byldgroup.com
+workspace: aerhome1brandwise
+project: gcplaerhome_brandwise
+version: 6 
