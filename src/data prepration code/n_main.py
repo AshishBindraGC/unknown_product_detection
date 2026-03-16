@@ -14,7 +14,7 @@ import re
 IMAGE_FOLDER = "/mnt/data/ashish/storage/output/oil_predict/images"
 OUTPUT_FILE = "correct_detection_oil_.txt"
 
-API_KEY = "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"
+API_KEY = ""
 BASE_URL = "https://integrate.api.nvidia.com/v1"
 
 MODEL = "mistralai/mistral-large-3-675b-instruct-2512"

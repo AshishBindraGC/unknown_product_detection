@@ -3,6 +3,7 @@ import base64
 from tqdm import tqdm
 from openai import OpenAI
 import re
+
 # =========================
 # CONFIG
 # =========================
@@ -10,7 +11,7 @@ import re
 IMAGE_FOLDER = "/mnt/data/ashish/storage/output/ecpl_prdict_sap/images"
 OUTPUT_FILE = "correct_detection_soap.txt"
 
-API_KEY = "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"
+API_KEY = ""
 BASE_URL = "https://integrate.api.nvidia.com/v1"
 
 MODEL = "mistralai/mistral-large-3-675b-instruct-2512"
