@@ -121,3 +121,272 @@ For future improvements:
 
 ---
 
+Below is your **content rewritten in professional, clear, and structured documentation style** suitable for **company documentation, Confluence, or technical reports**. I corrected grammar, clarified sentences, and organized it logically while keeping your technical details.
+
+---
+
+## Auto Labeling & Dataset Upload Pipeline Flow
+
+## 1. Pipeline Overview
+
+The auto-labeling and dataset upload pipeline consists of the following stages:
+
+1. **Dataset Preparation** (Data download and preprocessing)
+2. **YOLO Detection** (Two approaches) and **Final Label Creation** (merging labels and removing overlaps)
+3. **Label Normalization** (setting all classes to a single class)
+4. **Dataset Structuring & YAML File Generation**
+5. **Roboflow Batch Upload**
+
+---
+
+## 1. Dataset Preparation
+
+### Process
+
+* Collect or download datasets.
+* Data can be downloaded using the **Python SDK** or manually from **Roboflow**.
+* Merge multiple datasets into a single temporary folder.
+* Convert dataset structure from **train/test/valid** format to **images/labels** format.
+
+### Folder Structure
+
+```bash
+temp/
+ ├── images/
+ └── labels/
+```
+
+---
+
+## 2. YOLO Detection
+
+For auto-labeling, two detection approaches are used:
+
+1. **Ground Truth (GT) based detection**
+2. **Model-based detection**
+
+---
+
+## 2.1 Ground Truth (GT) Approach
+
+In this approach, datasets downloaded from **Roboflow** contain both **images and their existing labels**.
+
+### Workflow
+
+1. Existing labels (Ground Truth) are first collected into a list using a Python script.
+2. The same images are then passed to the **other.pt model** for additional predictions.
+3. Detected labels from the model are also added to the list.
+4. **Priority is always given to Ground Truth labels.**
+
+If duplicate or overlapping detections occur for the same product item, **YOLO’s built-in Non-Maximum Suppression (NMS)** is applied to remove overlaps.
+
+**NMS configuration**
+
+* IoU threshold: **0.01 – 0.1**
+
+This ensures that duplicate bounding boxes are removed.
+
+---
+
+## 2.2 Model-Based Detection Approach
+
+In this method, multiple product-specific models are used.
+
+For example:
+
+* If the product category is **rice**, we may use:
+
+  * **Rice Model 1**
+  * **Rice Model 2**
+  * **Other Products Model**
+
+### Workflow
+
+1. The same image is passed to all models.
+2. Each model performs inference independently.
+3. All detected labels are merged together.
+4. **Non-Maximum Suppression (NMS)** is applied to remove overlapping bounding boxes.
+
+### Observation
+
+This method produces **more predictions compared to the Ground Truth approach**, making it useful for discovering additional objects that may not have been labeled previously.
+
+---
+
+## 3. Label Normalization
+
+After detection, multiple classes may exist in the labels.
+
+To simplify training, **all class IDs are normalized to a single class (class = 0)**.
+
+### Implementation
+
+A Python script is used to modify the label files and set all class IDs to **0**.
+
+Example:
+
+```bash
+Before:
+2 0.45 0.52 0.12 0.18
+5 0.32 0.48 0.20 0.30
+
+After:
+0 0.45 0.52 0.12 0.18
+0 0.32 0.48 0.20 0.30
+```
+
+---
+
+## 4. Dataset Structuring & YAML File Generation
+
+After labels are processed:
+
+1. Images are collected from the **original input dataset**.
+2. Processed labels are collected from the **modified labels folder**.
+3. Images and labels are then structured into the final dataset format required for training.
+
+Example structure:
+
+```bash
+dataset/
+ ├── images/
+ ├── labels/
+ └── data.yaml
+```
+
+The **YAML file** contains dataset configuration used for YOLO training.
+
+---
+
+## 5. Roboflow Batch Upload
+
+The dataset is uploaded to **Roboflow** using the **Python SDK and API**.
+
+### Benefits of Automated Upload
+
+Manual upload:
+
+* Takes approximately **1 hour**
+
+Automated upload using Python:
+
+* Takes approximately **15 minutes**
+
+### Required Configuration
+
+* **Workspace API Key**
+* **Project ID**
+
+### Batch Upload Process
+
+Images are uploaded in batches such as:
+
+```bash
+BATCH_A → 200 images
+BATCH_B → 200 images
+```
+
+Batch size and batch naming can be configured in the script.
+
+---
+
+## Model Training Dataset
+
+For model training, the following datasets were used:
+
+### Public Dataset
+
+* **SKU-110K Dataset**
+* Approximately **10,000–11,000 images**
+
+### Internal Dataset
+
+* **~1,900 images collected internally**
+
+Both datasets were combined to create the final training dataset.
+
+---
+
+## Models Trained
+
+Two different YOLO models were trained:
+
+1. **YOLOv8 Model**
+2. **YOLOv11 Model**
+
+After evaluation, **YOLOv11 showed better detection performance compared to YOLOv8.**
+
+---
+
+## Data Collection Process
+
+### Auto-labeling Workflow
+
+1. Data was auto-labeled using the detection pipeline.
+2. The dataset was then sent for **manual verification** to ensure that all products were correctly labeled.
+3. Verified data was uploaded to **Roboflow** and added to the training dataset.
+
+---
+
+## Dataset Labeling Effort
+
+Total labeling effort took approximately **2 weeks**.
+
+### Team Contribution
+
+| Team Member   | Task                                 |
+| ------------- | ------------------------------------ |
+| Ashish        | Prepared **500 rice dataset images** |
+| Vineet        | Prepared **toothpaste dataset**      |
+| Aditya        | Assisted with toothpaste dataset     |
+| Labeling Team | Initial labeling support             |
+
+### Total Dataset
+
+| Category       | Total Images |
+| -------------- | ------------ |
+| Rice           | 489          |
+| Sanpro         | 239          |
+| Toothpaste     | 351          |
+| Handwash       | 272          |
+| Toilet Cleaner | 527          |
+| **Total**      | **1878**     |
+
+Vineet also prepared an **Excel tracking sheet** to monitor:
+
+* Total labeled images
+* Remaining images to be labeled
+
+---
+
+### Training Data Preparation
+
+The training dataset preparation process included:
+
+1. Uploading approximately **11 GB of data to Google Drive**
+2. Downloading the dataset into **Google Colab**
+3. Unzipping the dataset
+4. Converting annotations from **CSV format to YOLO `.txt` format**
+5. Downloading internal datasets from **Roboflow**
+6. Merging public and internal datasets
+7. Preparing the final dataset for training
+
+---
+
+# Data Sources
+
+The following sources were used to collect product data:
+
+| S.No. | Source / Client    | Product Category      |
+| ----- | ------------------ | --------------------- |
+| 1     | KRBL               | Rice                  |
+| 2     | KRBL               | Oil                   |
+| 3     | KRBL               | Biryani Masala        |
+| 4     | Racket             | 28 Product Categories |
+| 5     | GCPL / Dabur / AKP | Dabur Products        |
+| 6     | Additional         | Toothpaste            |
+| 7     | Additional         | Condoms               |
+| 8     | Additional         | Soap                  |
+| 9     | Additional         | Handwash              |
+
+---
